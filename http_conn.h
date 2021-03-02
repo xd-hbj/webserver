@@ -79,8 +79,9 @@ class http_conn{
             bool add_blank_line();
 
             static int m_epollfd;
+            static int m_listenfd;
             static int m_user_count;
-            static char* doc_root;
+            static const char* doc_root;
 
             private:
                 int m_sockfd;
@@ -105,7 +106,7 @@ class http_conn{
                 char* m_version;//http版本号
                 char* m_host;//主机名
                 int m_content_length;//http请求的消息体长度
-                bool m_linger;//http请求是否要求保持连接
+                bool m_linger = false;//http请求是否要求保持连接
 
                 char* m_file_address;//客户请求的目标文件被mmap到内存中的开始位置
 

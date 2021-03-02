@@ -1,10 +1,13 @@
 CXX=g++
-OBJECT = main.o http_conn.o
+CC=gcc
+OBJECT = http_conn.o main.o webserver.o 
+LIB = -lpthread
 
-server:
-	g++ -o server $(OBJECT)
+server:$(OBJECT)
+	$(CXX) -o server $(OBJECT) $(LIB)
+
 %.o:%.cpp
-	$(CC) -c $< -o $@
+	$(CXX) -c $< -o $@ $(LIB)
 
 clean:
-	rm server
+	rm server $(OBJECT)

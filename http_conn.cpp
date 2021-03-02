@@ -33,6 +33,9 @@ void removefd(int epollfd,int fd){
 void addfd(int epollfd,int fd,bool one_shot){
     epoll_event event;
     event.data.fd = fd;
+    /*if(http_conn::m_listenfd == fd){
+        event.events = EPOLLIN|EPOLLRDHUP;
+    }*/
     event.events = EPOLLIN|EPOLLET|EPOLLRDHUP;
     if(one_shot){
         event.events |= EPOLLONESHOT;
@@ -107,7 +110,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char* text){
     }
 
     cout<<"THE REQUEST URL IS: "<<m_url<<endl;
-    /*http请求行处理���毕*/
+    /*http请求行处理���毕*/
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
 
@@ -122,9 +125,17 @@ http_conn::HTTP_CODE http_conn::parse_headers(char* temp){
         temp += strspn(temp," \t");
         cout<<" the request host is: "<<temp<<endl;
     }
-    else{
-        cout<<"we do not handle this header"<<endl;
+    else if(strncasecmp(temp,"connection:",11)==0){
+        temp += 11;
+        temp += strspn(temp," \t");
+        if(strcasecmp(temp,"keep-alive")==0){
+            m_linger = true;
+            cout<<"---long connection----"<<endl;
+        }
     }
+    /*else{
+        cout<<"we do not handle this header"<<endl;
+    }*/
     return NO_REQUEST;
 }
 
@@ -199,8 +210,8 @@ bool http_conn::write(){
     }
 
     while(1){
+        
         temp = writev(m_sockfd,m_iv,m_iv_count);
-
         if(temp==-1){
             if(errno==EAGAIN){
                 modfd(m_epollfd,m_sockfd,EPOLLOUT);
@@ -223,11 +234,15 @@ bool http_conn::write(){
             m_iv[0].iov_base = m_write_buf+bytes_have_send;
         }
 
+        //cout<<"bytes_to_send: "<<bytes_to_send<<endl;
         if(bytes_to_send==0){
             unmap();
-            //close_conn();
-            modfd(m_epollfd,m_sockfd,EPOLLIN);
-            return true;
+            if(m_linger){
+                init();
+                modfd(m_epollfd,m_sockfd,EPOLLIN);
+                return true;
+            }
+            else return false;
         }
 
     }
@@ -275,6 +290,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
     switch(retcode){
         case BAD_REQUEST:
         {
+            cout<<"----BAD_REQUEST----"<<endl;
             add_status_line(400,error_400_title);
             add_headers(strlen(error_400_form));
             if(!add_content(error_400_form)){
@@ -284,6 +300,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
         }
         case NO_RESOURCE:
         {
+            cout<<"----NO_RESOURCE----"<<endl;
             add_status_line(404,error_404_title);
             add_headers(strlen(error_404_form));
             if(!add_content(error_404_form)){
@@ -293,6 +310,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
         }
         case FORBIDDEN_FILEPERMISSION:
         {
+            cout<<"----FORBIDDEN_FILEPERMISSION----"<<endl;
             add_status_line(403,error_403_title);
             add_headers(strlen(error_403_form));
             if(!add_content(error_403_form)){
@@ -302,6 +320,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
         }
         case INTERNAL_ERROR:
         {
+            cout<<"----INTERNAL_ERROR----"<<endl;
             add_status_line(500,error_500_title);
             add_headers(strlen(error_500_form));
             if(!add_content(error_500_form)){
@@ -311,10 +330,11 @@ bool http_conn::process_write(HTTP_CODE retcode){
         } 
         case FILE_REQUEST:
         {
-            //cout<<"get file successed"<<endl;
+            cout<<"get file successed"<<endl;
             add_status_line(200,ok_200_title);
             
             if(m_file_stat.st_size!=0){
+                //cout<<m_file_stat.st_size<<endl;
                 add_headers(m_file_stat.st_size);
                 m_iv[0].iov_base = m_write_buf;
                 m_iv[0].iov_len = m_write_idx;
@@ -334,6 +354,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
             }
         }
         default:
+            cout<<"----DEFAULT----"<<endl;
             return false;
     }
     m_iv_count = 1;
@@ -421,6 +442,7 @@ void http_conn::init(int sockfd, const sockaddr_in& addr){
     m_sockfd = sockfd;
     m_address = addr;
     ++m_user_count;
+    cout<<"m_user_cont:  "<<m_user_count<<endl;
     int opt = 1;
     setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
     addfd(m_epollfd,sockfd,true);
@@ -429,5 +451,6 @@ void http_conn::init(int sockfd, const sockaddr_in& addr){
 
 int http_conn::m_user_count = 0;
 int http_conn::m_epollfd = -1;
-char* http_conn::doc_root = "/home/hbj/code/hbj_webserver/root";
+int http_conn::m_listenfd = -1;
+const char* http_conn::doc_root = "/home/jhb/code/hbj_webserver/root";
 
