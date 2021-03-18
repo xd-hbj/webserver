@@ -1,13 +1,31 @@
 #include<iostream>
+#include<queue>
+#include<set>
+#include<forward_list>
 using namespace std;
 
-void func(){
-    throw exception();
-}
+class ClxBase{
+public:
+    ClxBase() {};
+    virtual ~ClxBase() {cout << "Output from the destructor of class ClxBase!" << endl;};
 
+    void DoSomething() { cout << "Do something in class ClxBase!" << endl; };
+    int x;
+};
+
+class ClxDerived : public ClxBase{
+public:
+    ClxDerived() {};
+    ~ClxDerived() { cout << "Output from the destructor of class ClxDerived!" << endl; };
+
+    void DoSomething() { cout << "Do something in class ClxDerived!" << endl; };
+    int y;
+};
+
+    
 int main(){
-    cout<<"before"<<endl;
-    func();
-    cout<<"after"<<endl;
+    ClxBase* ptr = new ClxDerived[5];
+    
+    delete ptr;
     return 0;
 }

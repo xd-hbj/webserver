@@ -83,7 +83,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char* text){
 
     char* method = text;
     if(strcasecmp(method,"get")!=0){//仅支持get方法
-        cout<<"THE REQUEST METHOD IS NOT GET"<<endl;
+        //cout<<"THE REQUEST METHOD IS NOT GET"<<endl;
         return BAD_REQUEST;
     }
     m_method = GET;
@@ -109,7 +109,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char* text){
         return BAD_REQUEST;
     }
 
-    cout<<"THE REQUEST URL IS: "<<m_url<<endl;
+    //cout<<"THE REQUEST URL IS: "<<m_url<<endl;
     /*http请求行处理���毕*/
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
@@ -123,14 +123,14 @@ http_conn::HTTP_CODE http_conn::parse_headers(char* temp){
     else if(strncasecmp(temp,"Host:",5)==0){
         temp += 5;
         temp += strspn(temp," \t");
-        cout<<" the request host is: "<<temp<<endl;
+        //cout<<" the request host is: "<<temp<<endl;
     }
     else if(strncasecmp(temp,"connection:",11)==0){
         temp += 11;
         temp += strspn(temp," \t");
         if(strcasecmp(temp,"keep-alive")==0){
             m_linger = true;
-            cout<<"---long connection----"<<endl;
+            //cout<<"---long connection----"<<endl;
         }
     }
     /*else{
@@ -177,7 +177,9 @@ bool http_conn::read(){
     int byte_read = 0;
     while (true)
     {
+
         byte_read = recv(m_sockfd,m_read_buf+m_read_idx,READ_BUFFER_SIZE-m_read_idx,0);
+        //cout<<"byte_read: "<<byte_read<<endl;
 
         if(byte_read==-1){
             if(errno==EAGAIN || errno==EWOULDBLOCK){
@@ -290,7 +292,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
     switch(retcode){
         case BAD_REQUEST:
         {
-            cout<<"----BAD_REQUEST----"<<endl;
+            //cout<<"----BAD_REQUEST----"<<endl;
             add_status_line(400,error_400_title);
             add_headers(strlen(error_400_form));
             if(!add_content(error_400_form)){
@@ -300,7 +302,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
         }
         case NO_RESOURCE:
         {
-            cout<<"----NO_RESOURCE----"<<endl;
+            //cout<<"----NO_RESOURCE----"<<endl;
             add_status_line(404,error_404_title);
             add_headers(strlen(error_404_form));
             if(!add_content(error_404_form)){
@@ -310,7 +312,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
         }
         case FORBIDDEN_FILEPERMISSION:
         {
-            cout<<"----FORBIDDEN_FILEPERMISSION----"<<endl;
+            //cout<<"----FORBIDDEN_FILEPERMISSION----"<<endl;
             add_status_line(403,error_403_title);
             add_headers(strlen(error_403_form));
             if(!add_content(error_403_form)){
@@ -320,7 +322,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
         }
         case INTERNAL_ERROR:
         {
-            cout<<"----INTERNAL_ERROR----"<<endl;
+            //cout<<"----INTERNAL_ERROR----"<<endl;
             add_status_line(500,error_500_title);
             add_headers(strlen(error_500_form));
             if(!add_content(error_500_form)){
@@ -330,7 +332,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
         } 
         case FILE_REQUEST:
         {
-            cout<<"get file successed"<<endl;
+            //cout<<"get file successed"<<endl;
             add_status_line(200,ok_200_title);
             
             if(m_file_stat.st_size!=0){
@@ -354,7 +356,7 @@ bool http_conn::process_write(HTTP_CODE retcode){
             }
         }
         default:
-            cout<<"----DEFAULT----"<<endl;
+            //cout<<"----DEFAULT----"<<endl;
             return false;
     }
     m_iv_count = 1;
@@ -442,7 +444,6 @@ void http_conn::init(int sockfd, const sockaddr_in& addr){
     m_sockfd = sockfd;
     m_address = addr;
     ++m_user_count;
-    cout<<"m_user_cont:  "<<m_user_count<<endl;
     int opt = 1;
     setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
     addfd(m_epollfd,sockfd,true);

@@ -1,6 +1,6 @@
 CXX=g++
 CC=gcc
-OBJECT = http_conn.o main.o webserver.o 
+OBJECT = http_conn.o main.o webserver.o threadpool.o
 LIB = -lpthread
 
 server:$(OBJECT)

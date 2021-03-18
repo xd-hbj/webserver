@@ -11,14 +11,14 @@ using namespace std;
 #define SERV_PORT 8000
 #define MAX_EVENT_NUMBER 1000
 
-extern void deleteAndsetnull(void *ptr);
-
 class Webserver{
     public:
         Webserver();
         ~Webserver(){
-            deleteAndsetnull(users);
-            deleteAndsetnull(m_pool);
+            delete[] users;
+            users = nullptr;
+            delete[] m_pool;
+            m_pool = nullptr;
             close(m_listenfd);
             close(m_epollfd);
 
@@ -30,7 +30,7 @@ class Webserver{
 
     private:
         http_conn* users;
-        threadpool<http_conn> *m_pool;
+        threadpool *m_pool;
 
         epoll_event events[MAX_EVENT_NUMBER];
 

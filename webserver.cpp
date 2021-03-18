@@ -4,13 +4,6 @@
 extern void modfd(int epollfd, int fd, int ev);
 extern void addfd(int epollfd,int fd,bool one_shot);
 
-void deleteAndsetnull(void *ptr){
-    if(ptr){
-        delete[] ptr;
-        ptr = nullptr;
-    }
-}
-
 Webserver::Webserver(){
     users = new http_conn[MAX_CONN];
     if(!users){
@@ -48,7 +41,7 @@ void Webserver::eventListen(){
 }
 
 void Webserver::initThreadpool(){
-    m_pool = new threadpool<http_conn>();
+    m_pool = new threadpool();
     if(!m_pool){
         cerr<<" m_pool allocate memory failed "<<endl;
         delete[] users;

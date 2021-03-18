@@ -23,14 +23,14 @@ threadpool::threadpool(int thread_numer,int max_request):
 
 
 bool threadpool::append(http_conn* request){
-    m_cond.cond_lock();
+    m_queuelocker.lock();
     if(m_workqueue.size()>=m_max_request){
-        m_cond.cond_unlock();
+        m_queuelocker.unlock();
         return false;
     }
     m_workqueue.push(request);
-    m_cond.cond_unlock();
-    m_cond.signal();
+    m_queuelocker.unlock();
+    m_queuesem.post();
     return true;
 }
 
@@ -42,16 +42,18 @@ void* threadpool::worker(void* arg){
 
 void threadpool::run(){
     while(true){
-        m_cond.cond_lock();
-        if(m_workqueue.empty()){
-            m_cond.wait_cond();
+        m_queuesem.wait();//block and wait signal
+        m_queuelocker.lock();
+        if(m_workqueue.empty()){//necessary
+            m_queuelocker.unlock();
+            continue;
         }
         http_conn* request = m_workqueue.front();
         /*if(!request){
             cout<<"-----request is nullptr-----------"<<endl;
         }*/
         m_workqueue.pop();
-        m_cond.cond_unlock();
+        m_queuelocker.unlock();
         request->process();
     }
 }
