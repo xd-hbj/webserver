@@ -60,19 +60,19 @@ void Webserver::eventLoop(){
                 break;
             }
             for(int i=0;i<nready;++i){
-                  int sockfd = events[i].data.fd;
-                  if(sockfd==m_listenfd){
-                        socklen_t len = sizeof(cliaddr);
-                        int confd = accept(m_listenfd,(struct sockaddr*)&cliaddr,&len);
-                        assert(confd>=0);
-                        if(http_conn::m_user_count >= MAX_CONN){
-                            cout<<confd<<": Internal server busy!"<<endl;
-                            continue;
-                        }
-                        users[confd].init(confd,cliaddr);
+                int sockfd = events[i].data.fd;
+                if(sockfd==m_listenfd){
+                    socklen_t len = sizeof(cliaddr);
+                    int confd = accept(m_listenfd,(struct sockaddr*)&cliaddr,&len);
+                    assert(confd>=0);
+                    if(http_conn::m_user_count >= MAX_CONN){
+                        cout<<confd<<": Internal server busy!"<<endl;
                         continue;
-                  }
-                  else if(events[i].events&EPOLLIN){
+                    }
+                    users[confd].init(confd,cliaddr);
+                    continue;
+                }
+                  /*else if(events[i].events&EPOLLIN){
                         bool readres = users[sockfd].read();
                         if(!readres){
                             users[sockfd].close_conn();
@@ -85,7 +85,14 @@ void Webserver::eventLoop(){
                         if(!users[sockfd].write()){
                             users[sockfd].close_conn();
                         }
-                  }
+                  }*/
+                else if(events[i].events&EPOLLIN){
+                    m_pool->append(users+sockfd,0);
+                }
+                else if(events[i].events&EPOLLOUT){
+                    m_pool->append(users+sockfd,1);
+                }
+
             }
       }
       

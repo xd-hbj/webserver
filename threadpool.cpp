@@ -22,12 +22,13 @@ threadpool::threadpool(int thread_numer,int max_request):
 
 
 
-bool threadpool::append(http_conn* request){
+bool threadpool::append(http_conn* request,int state){
     m_cond.cond_lock();
     if(m_workqueue.size()>=m_max_request){
         m_cond.cond_unlock();
         return false;
     }
+    request->m_state = state;
     m_workqueue.push(request);
     m_cond.cond_unlock();
     m_cond.signal();
@@ -52,6 +53,20 @@ void threadpool::run(){
         }*/
         m_workqueue.pop();
         m_cond.cond_unlock();
-        request->process();
+
+        if(request->m_state==0){//work thread read
+            bool readres = request->read();//reactor mode
+            if(!readres){
+                request->close_conn();
+            }
+            request->process();
+        }
+        else if(request->m_state==1){//work thread write
+            bool writeres = request->write();
+            if(!writeres){
+                request->close_conn();
+            }
+        }
+        
     }
 }

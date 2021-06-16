@@ -14,7 +14,7 @@ class threadpool{
             delete[] m_threads;
             m_threads = nullptr;
         }
-        bool append(http_conn* request);
+        bool append(http_conn* request,int state);//state: 0-->read,1-->write 
         void run();
         static void* worker(void* arg);
 

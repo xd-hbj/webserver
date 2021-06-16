@@ -82,6 +82,7 @@ class http_conn{
             static int m_listenfd;
             static int m_user_count;
             static const char* doc_root;
+            int m_state;
 
             private:
                 int m_sockfd;
