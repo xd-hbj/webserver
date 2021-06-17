@@ -48,9 +48,9 @@ void threadpool::run(){
             m_cond.wait_cond();
         }
         http_conn* request = m_workqueue.front();
-        /*if(!request){
+        if(!request){
             cout<<"-----request is nullptr-----------"<<endl;
-        }*/
+        }
         m_workqueue.pop();
         m_cond.cond_unlock();
 
@@ -63,6 +63,7 @@ void threadpool::run(){
         }
         else if(request->m_state==1){//work thread write
             bool writeres = request->write();
+            //cout<<"writeres: "<<writeres<<endl;
             if(!writeres){
                 request->close_conn();
             }

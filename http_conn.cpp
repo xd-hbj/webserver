@@ -239,6 +239,7 @@ bool http_conn::write(){
         //cout<<"bytes_to_send: "<<bytes_to_send<<endl;
         if(bytes_to_send==0){
             unmap();
+            //cout<<"mlinger: "<<m_linger<<endl;
             if(m_linger){
                 init();
                 modfd(m_epollfd,m_sockfd,EPOLLIN);
@@ -453,5 +454,5 @@ void http_conn::init(int sockfd, const sockaddr_in& addr){
 int http_conn::m_user_count = 0;
 int http_conn::m_epollfd = -1;
 int http_conn::m_listenfd = -1;
-const char* http_conn::doc_root = "/home/jhb/code/hbj_webserver/root";
+const char* http_conn::doc_root = "/home/hbj/hbj_webserver/webserver/root";
 
